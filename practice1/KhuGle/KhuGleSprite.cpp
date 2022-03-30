@@ -36,9 +36,19 @@ CKhuGleSprite::CKhuGleSprite(int nType, int nCollisionType, CKgLine lnLine, KgCo
 	m_Center.y = (lnLine.Start.Y + lnLine.End.Y)/2.;
 
 	m_Velocity = CKgVector2D(0., 0.);
-	m_Radius = std::max(fabs((lnLine.Start.X - lnLine.End.X)/2.), fabs((lnLine.Start.Y - lnLine.End.Y)/2.));
+
+	if (m_nType == GP_STYPE_RECT) {
+		m_Radius = std::min(fabs((lnLine.Start.X - lnLine.End.X) / 2.), fabs((lnLine.Start.Y - lnLine.End.Y) / 2.));
+	}
+	else {
+		m_Radius = std::max(fabs((lnLine.Start.X - lnLine.End.X) / 2.), fabs((lnLine.Start.Y - lnLine.End.Y) / 2.));
+	}
+	
 
 	m_Mass = m_Radius*m_Radius;
+
+
+
 }
 
 CKhuGleSprite::~CKhuGleSprite()

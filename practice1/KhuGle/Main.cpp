@@ -12,19 +12,29 @@ public:
 
 	CKhuGleSprite *m_pCircle1;
 	CKhuGleSprite *m_pCircle2;
+	CKhuGleSprite* m_pCircle3;
 
 	CKhuGleSprite *m_pLine1;
 	CKhuGleSprite* m_pLine2;
 	CKhuGleSprite* m_pLine3;
 	CKhuGleSprite* m_pLine4;
 
-	CKhuGleSprite *m_pNewBlock[100];
+	CKhuGleSprite *m_pNewBlock[200];
+
+	CKhuGleSprite* m_Player_up;
+	CKhuGleSprite* m_Player_down;
+	CKhuGleSprite* m_Player_right;
+	CKhuGleSprite* m_Player_left;
 
 	CCollision(int nW, int nH);
 	void Update();
 
 	CKgPoint m_LButtonStart, m_LButtonEnd;
 	int m_nLButtonStatus;
+
+	int score;
+	int blocks;
+	int n;
 };
 
 CCollision::CCollision(int nW, int nH) : CKhuGleWin(nW, nH) 
@@ -44,6 +54,8 @@ CCollision::CCollision(int nW, int nH) : CKhuGleWin(nW, nH)
 		KG_COLOR_24_RGB(255, 0, 0), true, 100);
 	m_pCircle2 = new CKhuGleSprite(GP_STYPE_ELLIPSE, GP_CTYPE_DYNAMIC, CKgLine(CKgPoint(100, 300), CKgPoint(130, 330)),
 		KG_COLOR_24_RGB(255, 0, 0), true, 100);
+	m_pCircle3 = new CKhuGleSprite(GP_STYPE_ELLIPSE, GP_CTYPE_DYNAMIC, CKgLine(CKgPoint(100, 300), CKgPoint(130, 330)),
+		KG_COLOR_24_RGB(255, 0, 0), true, 100);
 
 	m_pLine1 = new CKhuGleSprite(GP_STYPE_LINE, GP_CTYPE_STATIC, CKgLine(CKgPoint(0, 400), CKgPoint(640, 400)), 
 		KG_COLOR_24_RGB(255, 0, 0), false, 10);
@@ -54,53 +66,94 @@ CCollision::CCollision(int nW, int nH) : CKhuGleWin(nW, nH)
 	m_pLine4 = new CKhuGleSprite(GP_STYPE_LINE, GP_CTYPE_STATIC, CKgLine(CKgPoint(0, 0), CKgPoint(0, 480)),
 		KG_COLOR_24_RGB(255, 0, 0), false, 10);
 
+
+
+
+
+	m_Player_up = new CKhuGleSprite(GP_STYPE_LINE, GP_CTYPE_DYNAMIC, CKgLine(CKgPoint(300, 20), CKgPoint(400, 20)),
+		KG_COLOR_24_RGB(0, 0, 255), true, 10);
+	m_Player_down = new CKhuGleSprite(GP_STYPE_LINE, GP_CTYPE_DYNAMIC, CKgLine(CKgPoint(300, 380), CKgPoint(400, 380)),
+		KG_COLOR_24_RGB(0, 0, 255), true, 10);
+	m_Player_right = new CKhuGleSprite(GP_STYPE_LINE, GP_CTYPE_DYNAMIC, CKgLine(CKgPoint(20, 300), CKgPoint(20, 400)),
+		KG_COLOR_24_RGB(0, 0, 255), true, 10);
+	m_Player_left = new CKhuGleSprite(GP_STYPE_LINE, GP_CTYPE_DYNAMIC, CKgLine(CKgPoint(580, 300), CKgPoint(580, 400)),
+		KG_COLOR_24_RGB(0, 0, 255), true, 10);
+
+	n = 0;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 16; j++) {
+			m_pNewBlock[n] = new CKhuGleSprite(GP_STYPE_RECT, GP_CTYPE_STATIC, CKgLine(CKgPoint(40 * j, 40 * i), CKgPoint(40 + 40 * j, 40 + 40 * i)),
+				KG_COLOR_24_RGB(0, 255, 0), false, 100);
+
+			m_pGameLayer->AddChild(m_pNewBlock[n]);
+			n++;
+		}
+	}
+
 	m_pGameLayer->AddChild(m_pCircle1);
 	m_pGameLayer->AddChild(m_pCircle2);
+	m_pGameLayer->AddChild(m_pCircle3);
 
 	m_pGameLayer->AddChild(m_pLine1);
 	m_pGameLayer->AddChild(m_pLine2);
 	m_pGameLayer->AddChild(m_pLine3);
 	m_pGameLayer->AddChild(m_pLine4);
 
-	m_pCircle1->m_Velocity = CKgVector2D(900, 50);
-	m_pCircle2->m_Velocity = CKgVector2D(-100, -300);
+	m_pGameLayer->AddChild(m_Player_up);
+	m_pGameLayer->AddChild(m_Player_down);
+	m_pGameLayer->AddChild(m_Player_right);
+	m_pGameLayer->AddChild(m_Player_left);
 
-	for(int i = 0 ; i < 5 ; i++)
-	{
-		for (int j = 0; j < 11; j++) {
-			m_pNewBlock[i] = new CKhuGleSprite(GP_STYPE_RECT, GP_CTYPE_STATIC, CKgLine(CKgPoint(13+52*j, 10+30*i), CKgPoint(52+52*j, 30+30*i)),
-				KG_COLOR_24_RGB(255, 0, 0), false, 100);
+	
 
-			m_pGameLayer->AddChild(m_pNewBlock[i]);
-		}
-	}
+	m_pCircle1->m_Velocity = CKgVector2D(100,100);
+	m_pCircle2->m_Velocity = CKgVector2D(-100, -100);
+	m_pCircle3->m_Velocity = CKgVector2D(100, -100);
 
 
-
+	score = 10;
+	blocks = 0;
 }
 
 void CCollision::Update()
 {
-	if(m_bMousePressed[0]) {
-		if(m_nLButtonStatus == 0)		{
-			m_LButtonStart = CKgPoint(m_MousePosX, m_MousePosY);
-		}
-		m_LButtonEnd = CKgPoint(m_MousePosX, m_MousePosY);
-		m_nLButtonStatus = 1;
-	}
-	else {
-		if(m_nLButtonStatus == 1) {
-			std::cout << m_LButtonStart.X << "," << m_LButtonStart.Y << std::endl;
-			std::cout << m_LButtonEnd.X << "," << m_LButtonEnd.Y << std::endl;
 
-			m_nLButtonStatus = 0;
+
+	if (m_bKeyPressed['A']) {
+		m_Player_up->MoveBy(-1, 0);
+		m_Player_down->MoveBy(-1, 0);
+	}
+	if (m_bKeyPressed['D']) {
+		m_Player_up->MoveBy(1, 0);
+		m_Player_down->MoveBy(1, 0);
+	}
+	if (m_bKeyPressed['W']) {
+		m_Player_right->MoveBy(0, -1);
+		m_Player_left->MoveBy(0, -1);
+	}
+	if (m_bKeyPressed['S']) {
+		m_Player_right->MoveBy(0, 1);
+		m_Player_left->MoveBy(0, 1);
+	}
+
+
+	if (blocks > 9 && n<200) {
+		blocks = 0;
+		std::cout << "new block!" <<'\n';
+
+		for (int k = 0; k < 5; k++) {
+			int i = rand() % 6;
+			int j = rand() % 11;
+			m_pNewBlock[n] = new CKhuGleSprite(GP_STYPE_RECT, GP_CTYPE_STATIC, CKgLine(CKgPoint(40 * j, 40 * i), CKgPoint(40 + 40 * j, 40 + 40 * i)),
+				KG_COLOR_24_RGB(0, 255, 0), false, 100);
+
+			m_pGameLayer->AddChild(m_pNewBlock[n]);
+			n++;
 		}
 	}
 
-	//if(m_bKeyPressed[VK_LEFT]) m_pCircle1->m_Velocity = CKgVector2D(-500, 0);
-	//if(m_bKeyPressed[VK_UP]) m_pCircle1->m_Velocity = CKgVector2D(0, -500);
-	//if(m_bKeyPressed[VK_RIGHT]) m_pCircle1->m_Velocity = CKgVector2D(500, 0);
-	//if(m_bKeyPressed[VK_DOWN]) m_pCircle1->m_Velocity = CKgVector2D(0, 500);
+
 
 	for(auto &Layer : m_pScene->m_Children)
 	{
@@ -121,9 +174,10 @@ void CCollision::Update()
 			//Ball->m_Velocity.x += Ball->m_Acceleration.x * m_ElapsedTime;
 			//Ball->m_Velocity.y += Ball->m_Acceleration.y * m_ElapsedTime;
 
-			if (CKgVector2D::abs(Ball->m_Velocity) < 10) {
-				Ball->m_Velocity.x *= Ball->m_Velocity.x * 10;
-				Ball->m_Velocity.y *= Ball->m_Velocity.y * 10;
+
+			if (CKgVector2D::abs(Ball->m_Velocity) < 200) {
+				Ball->m_Velocity.x *=  2;
+				Ball->m_Velocity.y *=  2;
 			}
 
 			Ball->MoveBy(Ball->m_Velocity.x*m_ElapsedTime, Ball->m_Velocity.y*m_ElapsedTime);
@@ -189,40 +243,50 @@ void CCollision::Update()
 				}
 
 				else if (Target->m_nType == GP_STYPE_RECT) {
+
 					CKgVector2D PosVec = Ball->m_Center - Target->m_Center;
 					double Overlapped = CKgVector2D::abs(PosVec) - Ball->m_Radius - Target->m_Radius;
 					if (Overlapped <= 0)
 					{
+
 						CollisionPairs.push_back({ Ball, Target });
 
-						if (CKgVector2D::abs(PosVec) == 0)
-						{
-							if (Ball->m_nCollisionType != GP_CTYPE_STATIC)
-								Ball->MoveBy(rand() % 3 - 1, rand() % 3 - 1);
+						//if (CKgVector2D::abs(PosVec) == 0)
+						//{
+						//	if (Ball->m_nCollisionType != GP_CTYPE_STATIC)
+						//		Ball->MoveBy(rand() % 3 - 1, rand() % 3 - 1);
 
-						}
-						else
-						{
+						//}
+					
 							if (Ball->m_nCollisionType != GP_CTYPE_STATIC)
 							{
-								if (Target->m_nCollisionType == GP_CTYPE_STATIC)
-									Ball->MoveBy(-PosVec.x * Overlapped / CKgVector2D::abs(PosVec), -PosVec.y * Overlapped / CKgVector2D::abs(PosVec));
+								//if (Target->m_nCollisionType == GP_CTYPE_STATIC)
+									Ball->MoveBy((-PosVec.x * Overlapped / CKgVector2D::abs(PosVec)) * m_ElapsedTime, (-PosVec.y * Overlapped / CKgVector2D::abs(PosVec)) * m_ElapsedTime);
+							}
+							if (Target->m_nCollisionType == GP_CTYPE_STATIC) {
+
+								std::vector<CKhuGleComponent*>::iterator it;
+
+								it = find(m_pGameLayer->m_Children.begin(), m_pGameLayer->m_Children.end(), Target);
+								if (it != m_pGameLayer->m_Children.end()) {
+									//std::cout << "Element found in myvector: " << ' ' << *it << '\n';
+									score += 1;
+									blocks++;
+									std::cout << "score: " << score  << ' '<< blocks<<'\n';
+									m_pGameLayer->m_Children.erase(it);
+								}
+								else {
+									//std::cout << "Element not found in myvector: " << '\n';
+								}
 							}
 
-						}
-
-						Target->m_Parent = NULL;
-						//m_pGameLayer->AddChild(Target);
 						
 
-
-
-						Ball->m_bCollided = true;
-						//Target->m_bCollided = true;
+						
 					}
 				}
 						
-				if(Target->m_nType == GP_STYPE_LINE)
+				else if(Target->m_nType == GP_STYPE_LINE)
 				{
 					CKgVector2D LinePos = CKgVector2D(Target->m_lnLine.End.X, Target->m_lnLine.End.Y)
 						- CKgVector2D(Target->m_lnLine.Start.X, Target->m_lnLine.Start.Y);
@@ -264,9 +328,15 @@ void CCollision::Update()
 								Ball->MoveBy(-Normal.x*Overlapped/CKgVector2D::abs(Normal), -Normal.y*Overlapped/CKgVector2D::abs(Normal));
 						}
 
-						Ball->m_bCollided = true;
-						Target->m_bCollided = true;
+						if (Target->m_nCollisionType == GP_CTYPE_STATIC) {
+							score--;
+							std::cout << "score: " << score << '\n';
+						}
+
 					}
+					
+
+
 				}
 			}
 		}
@@ -288,6 +358,8 @@ void CCollision::Update()
 			BallA->m_Velocity.x = BallA->m_Velocity.x - p * BallB->m_Mass * Normal.x;
 			BallA->m_Velocity.y = BallA->m_Velocity.y - p * BallB->m_Mass * Normal.y;
 
+			
+
 			BallB->m_Velocity.x = BallB->m_Velocity.x + p * BallA->m_Mass * Normal.x;
 			BallB->m_Velocity.y = BallB->m_Velocity.y + p * BallA->m_Mass * Normal.y;
 		}
@@ -299,7 +371,10 @@ void CCollision::Update()
 	m_pScene->Render();
 	DrawSceneTextPos("Collision and Physics", CKgPoint(0, 0));
 
+
+
 	CKhuGleWin::Update();
+
 }
 
 int main()

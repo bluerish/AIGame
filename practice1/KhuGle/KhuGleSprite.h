@@ -30,6 +30,8 @@ public:
 	int m_nWidth;
 	int m_nSlice;
 
+	int num;
+
 	CKgVector2D m_Center, m_Velocity, m_Acceleration;
 	double m_Radius;
 	double m_Mass;
